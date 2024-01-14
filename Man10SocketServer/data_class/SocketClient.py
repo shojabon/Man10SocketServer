@@ -16,6 +16,8 @@ class SocketClient:
         self.socket = socket
         self.message_queue = Queue()
 
+        self.listening_event_types = []
+
         def send_message_thread():
             while True:
                 try:

@@ -16,6 +16,7 @@ from Man10SocketServer.data_class.SocketClient import SocketClient
 from Man10SocketServer.data_class.SocketFunction import SocketFunction
 from Man10SocketServer.socket_functions.CommandFunction import CommandFunction
 from Man10SocketServer.socket_functions.SCommandFunction import SCommandFunction
+from Man10SocketServer.socket_functions.SubscribeToEventHandlerFunction import SubscribeToEventHandlerFunction
 
 if TYPE_CHECKING:
     from Man10SocketServer import Man10SocketServer
@@ -26,9 +27,12 @@ class ClientHandler:
     def __init__(self, main: Man10SocketServer):
         self.main: Man10SocketServer = main
 
+        self.clients: list[SocketClient] = []
+
         self.socket_functions: dict[str, SocketFunction] = {}
         self.__register_socket_function(CommandFunction(self.main))
         self.__register_socket_function(SCommandFunction(self.main))
+        self.__register_socket_function(SubscribeToEventHandlerFunction(self.main))
 
         def start_server():
             port = self.main.config["listeningPort"]
@@ -59,6 +63,7 @@ class ClientHandler:
     def handle_client(self, client_socket: socket.socket):
         buffer = ""
         client_object = SocketClient(client_socket)
+        self.clients.append(client_object)
         while True:
             try:
                 data = client_socket.recv(1024 * 10).decode('utf-8')
@@ -74,6 +79,7 @@ class ClientHandler:
                         except json.JSONDecodeError:
                             print("Failed to decode message as JSON")
             except ConnectionResetError:
+                self.clients.remove(client_object)
                 break
 
     def handle_message(self, message: dict, client_object: SocketClient):

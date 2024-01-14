@@ -13,6 +13,10 @@ from typing import TYPE_CHECKING, Callable
 
 from expiring_dict import ExpiringDict
 
+from Man10SocketServer.data_class.ServerSocketFunction import ServerSocketFunction
+from Man10SocketServer.data_class.SocketFunction import SocketFunction
+from Man10SocketServer.server_socket_functions.EventHandlerFunction import EventHandlerFunction
+
 if TYPE_CHECKING:
     from Man10SocketServer import Man10SocketServer
 
@@ -29,6 +33,9 @@ class Server:
         self.reply_lock = ExpiringDict(5)
         self.reply_callback = ExpiringDict(5)
         self.reply_arguments = ExpiringDict(5)
+
+        self.socket_functions: dict[str, ServerSocketFunction] = {}
+        self.__register_socket_function(EventHandlerFunction(self.main))
 
         self.message_queue = Queue()
 
@@ -58,6 +65,10 @@ class Server:
         self.check_open_socket_count_thread = Thread(target=self.check_open_socket_count_thread)
         self.check_open_socket_count_thread.daemon = True
         self.check_open_socket_count_thread.start()
+
+    def __register_socket_function(self, function: ServerSocketFunction):
+        self.socket_functions[function.function_type] = function
+        print(f"Registered server socket function: {function.name} ({function.function_type})")
 
     def check_open_socket_count_thread(self):
         while True:
@@ -89,7 +100,8 @@ class Server:
                         message, buffer = buffer.split("<E>", 1)
                         try:
                             json_message = json.loads(message)
-                            if json_message.get("type") == "reply":
+                            message_type = json_message.get("type")
+                            if message_type == "reply":
                                 response_id = json_message.get("replyId") if "replyId" in json_message else None
                                 if response_id is None:
                                     continue
@@ -101,7 +113,8 @@ class Server:
                                     # Trigger the event to unblock the waiting thread
                                     self.reply_lock[response_id].set()
                             else:
-                                print("Received message:", json_message)
+                                if message_type in self.socket_functions:
+                                    self.socket_functions[message_type].handle_message(json_message, self.name)
                         except Exception as e:
                             print("Error parsing message:", e)
                             traceback.print_exc()
