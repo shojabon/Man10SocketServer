@@ -1,20 +1,26 @@
 from __future__ import annotations
 
 import json
+import uuid
 from queue import Queue
 from threading import Thread
 from typing import TYPE_CHECKING, Callable
 import socket
 
+from expiring_dict import ExpiringDict
+
 if TYPE_CHECKING:
     from Man10SocketServer import Man10SocketServer
 
 
-class SocketClient:
+class Client:
 
     def __init__(self, socket: socket.socket):
         self.socket = socket
         self.message_queue = Queue()
+        self.reply_callback = ExpiringDict(5)
+
+        self.name = None
 
         self.listening_event_types = []
 
@@ -31,7 +37,11 @@ class SocketClient:
         self.send_message_thread.daemon = True
         self.send_message_thread.start()
 
-    def send_message(self, message: dict):
+    def send_message(self, message: dict, callback: Callable = None):
+        if callback is not None:
+            reply_id = str(uuid.uuid4())
+            self.reply_callback[reply_id] = callback
+            message["replyId"] = reply_id
         self.message_queue.put(message)
 
     def send_reply_message(self, status: str, message, reply_id: str):

@@ -16,6 +16,7 @@ from expiring_dict import ExpiringDict
 from Man10SocketServer.data_class.ServerSocketFunction import ServerSocketFunction
 from Man10SocketServer.data_class.SocketFunction import SocketFunction
 from Man10SocketServer.server_socket_functions.EventHandlerFunction import EventHandlerFunction
+from Man10SocketServer.server_socket_functions.RequestFunction import RequestFunction
 
 if TYPE_CHECKING:
     from Man10SocketServer import Man10SocketServer
@@ -36,6 +37,7 @@ class Server:
 
         self.socket_functions: dict[str, ServerSocketFunction] = {}
         self.__register_socket_function(EventHandlerFunction(self.main))
+        self.__register_socket_function(RequestFunction(self.main))
 
         self.message_queue = Queue()
 
@@ -115,6 +117,8 @@ class Server:
                             else:
                                 if message_type in self.socket_functions:
                                     self.socket_functions[message_type].handle_message(json_message, self.name)
+                                else:
+                                    print("Unknown message:", json_message)
                         except Exception as e:
                             print("Error parsing message:", e)
                             traceback.print_exc()

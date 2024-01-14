@@ -1,10 +1,10 @@
 import json
 import time
+from threading import Thread
 
 from tqdm import tqdm
 
-from Man10SocketServer.data_class.ClientHandler import ClientHandler
-from Man10SocketServer.data_class.Server import Server
+from Man10SocketServer.data_class.ConnectionHandler import ConnectionHandler
 
 
 class Man10SocketServer:
@@ -13,11 +13,31 @@ class Man10SocketServer:
         self.config = open("config/config.json", "r")
         self.config = json.load(self.config)
 
-        self.servers: dict[str, Server] = {}
-        for server in self.config["servers"]:
-            self.servers[server["name"]] = Server(self, server["name"], server["host"], server["port"])
+        self.connection_handler: ConnectionHandler = ConnectionHandler(self)
+        self.connection_handler.open_socket_client("0.0.0.0", 5000)
 
-        self.client_handlers = ClientHandler(self)
+        def check_open_socket_count_thread():
+            while True:
+                for server in self.config["servers"]:
+                    open_sockets = [x for x in self.connection_handler.sockets.values() if x.name == server["name"]]
+                    if len(open_sockets) < self.config["consecutiveSockets"]:
+                        print("Opening socket", server["name"])
+                        open_socket = self.connection_handler.socket_open_server(server["name"], server["host"], server["port"])
+                        if open_socket is None:
+                            print("Failed to open socket", server["name"])
+                        else:
+                            print("Socket opened", server["name"])
+                time.sleep(1)
+
+        self.check_open_socket_count_thread = Thread(target=check_open_socket_count_thread)
+        self.check_open_socket_count_thread.daemon = True
+        self.check_open_socket_count_thread.start()
+
+        # self.servers: dict[str, Server] = {}
+        # for server in self.config["servers"]:
+        #     self.servers[server["name"]] = Server(self, server["name"], server["host"], server["port"])
+
+        # self.client_handlers = ClientHandler(self)
 
         # start_time = time.time()
         # for x in tqdm(range(10000)):

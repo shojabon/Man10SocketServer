@@ -12,12 +12,8 @@ from typing import TYPE_CHECKING, Callable
 
 from expiring_dict import ExpiringDict
 
-from Man10SocketServer.data_class.SocketClient import SocketClient
+from Man10SocketServer.data_class.Client import Client
 from Man10SocketServer.data_class.SocketFunction import SocketFunction
-from Man10SocketServer.socket_functions.CommandFunction import CommandFunction
-from Man10SocketServer.socket_functions.SCommandFunction import SCommandFunction
-from Man10SocketServer.socket_functions.SubscribeToEventHandlerFunction import SubscribeToEventHandlerFunction
-
 if TYPE_CHECKING:
     from Man10SocketServer import Man10SocketServer
 
@@ -27,12 +23,13 @@ class ClientHandler:
     def __init__(self, main: Man10SocketServer):
         self.main: Man10SocketServer = main
 
-        self.clients: list[SocketClient] = []
+        self.clients: list[Client] = []
 
         self.socket_functions: dict[str, SocketFunction] = {}
         self.__register_socket_function(CommandFunction(self.main))
         self.__register_socket_function(SCommandFunction(self.main))
         self.__register_socket_function(SubscribeToEventHandlerFunction(self.main))
+        self.__register_socket_function(SetNameFunction(self.main))
 
         def start_server():
             port = self.main.config["listeningPort"]
@@ -62,7 +59,7 @@ class ClientHandler:
 
     def handle_client(self, client_socket: socket.socket):
         buffer = ""
-        client_object = SocketClient(client_socket)
+        client_object = Client(client_socket)
         self.clients.append(client_object)
         while True:
             try:
@@ -82,9 +79,10 @@ class ClientHandler:
                 self.clients.remove(client_object)
                 break
 
-    def handle_message(self, message: dict, client_object: SocketClient):
+    def handle_message(self, message: dict, client_object: Client):
         message_type = message["type"]
         if message_type not in self.socket_functions:
+            print(f"Unknown message :", message)
             return
         reply = self.socket_functions[message_type].handle_message(message, client_object)
         if reply is not None and len(reply) == 2 and "replyId" in message:

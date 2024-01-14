@@ -3,7 +3,7 @@ from __future__ import annotations
 import socket
 from typing import TYPE_CHECKING, Callable
 
-from Man10SocketServer.data_class.SocketClient import SocketClient
+from Man10SocketServer.data_class.Client import Client
 
 if TYPE_CHECKING:
     from Man10SocketServer import Man10SocketServer
@@ -16,5 +16,5 @@ class SocketFunction:
     def __init__(self, main: Man10SocketServer):
         self.main: Man10SocketServer = main
 
-    def handle_message(self, json_message: dict, client_socket: SocketClient):
+    def handle_message(self, json_message: dict, client_socket: Client):
         pass
