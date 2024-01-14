@@ -16,12 +16,16 @@ if TYPE_CHECKING:
 
 class ConnectionHandler:
 
-    def __init__(self, main: Man10SocketServer):
-        self.main = main
+    def __init__(self):
 
         self.sockets: dict[str, Connection] = {}
         self.same_name_sockets: dict[str, list[str]] = {}
         self.get_counter = 0
+
+        def empty():
+            pass
+
+        self.register_function_on_connect: Callable[[Connection], None] = empty
 
     def socket_open_server(self, name, host, port) -> socket.socket | None:
         socket_id = str(uuid.uuid4())
@@ -41,8 +45,6 @@ class ConnectionHandler:
 
     def open_socket_client(self, host, port):
         def start_server():
-            port = self.main.config["listeningPort"]
-            host = "0.0.0.0"
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_socket.bind((host, port))
             server_socket.listen()
@@ -66,7 +68,7 @@ class ConnectionHandler:
     def get_server_socket(self, socket_id) -> Connection:
         return self.sockets[socket_id]
 
-    def get_server_socket_round_robin(self, name: str):
+    def get_socket(self, name: str) -> Connection | None:
         if name not in self.same_name_sockets:
             return None
         import random

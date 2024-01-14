@@ -22,4 +22,7 @@ class SetNameFunction(ConnectionFunction):
             return "invalid_args_name", None
         name = json_message["name"]
         connection.name = name
+        if name not in self.main.connection_handler.same_name_sockets:
+            self.main.connection_handler.same_name_sockets[name] = []
+        self.main.connection_handler.same_name_sockets[name].append(connection.socket_id)
         return "success", None

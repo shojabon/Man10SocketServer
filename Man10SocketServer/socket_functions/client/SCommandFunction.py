@@ -27,7 +27,7 @@ class SCommandFunction(ConnectionFunction):
         if "replyId" in json_message:
             options["callback"] = lambda message: connection.send_reply_message(message["status"], message["message"],
                                                                                 json_message["replyId"])
-        server_socket = self.main.connection_handler.get_server_socket_round_robin(server)
+        server_socket = self.main.connection_handler.get_socket(server)
         if server_socket is None:
             return "server_not_found", None
         server_socket.send_message({"type": "sCommand", "command": json_message["command"]}, **options)

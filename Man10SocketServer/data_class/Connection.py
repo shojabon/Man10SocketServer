@@ -19,6 +19,7 @@ from Man10SocketServer.socket_functions.client.SCommandFunction import SCommandF
 from Man10SocketServer.socket_functions.client.SetNameFunction import SetNameFunction
 from Man10SocketServer.socket_functions.client.SubscribeToEventHandlerFunction import SubscribeToEventHandlerFunction
 from Man10SocketServer.socket_functions.server.EventHandlerFunction import EventHandlerFunction
+from Man10SocketServer.socket_functions.server.RequestFunction import RequestFunction
 
 if TYPE_CHECKING:
     from Man10SocketServer.data_class.ConnectionHandler import ConnectionHandler
@@ -44,14 +45,7 @@ class Connection:
         self.message_queue = Queue()
 
         self.functions: dict[str, ConnectionFunction] = {}
-        self.__register_socket_function(CommandFunction(self.main.main))
-        self.__register_socket_function(SCommandFunction(self.main.main))
-        self.__register_socket_function(SetNameFunction(self.main.main))
-        self.__register_socket_function(SubscribeToEventHandlerFunction(self.main.main))
-
-        self.__register_socket_function(ReplyFunction(self.main.main))
-
-        self.__register_socket_function(EventHandlerFunction(self.main.main))
+        self.main.register_function_on_connect(self)
 
         def send_message_thread():
             while True:
@@ -70,7 +64,7 @@ class Connection:
         thread.daemon = True
         thread.start()
 
-    def __register_socket_function(self, socket_function: ConnectionFunction):
+    def register_socket_function(self, socket_function: ConnectionFunction):
         self.functions[socket_function.function_type] = socket_function
 
     def __send_message_internal(self, message: dict):
@@ -126,6 +120,7 @@ class Connection:
                         message, buffer = buffer.split("<E>", 1)
                         try:
                             json_message = json.loads(message)
+                            print("accepted message", json_message)
                             self.handle_message(json_message)
                         except Exception as e:
                             print("Error parsing message:", e)
@@ -135,6 +130,25 @@ class Connection:
             except Exception as e:
                 print("Error receiving data:", e)
                 break
+        self.socket_close()
+
+    def socket_close(self):
+        try:
+            self.socket_object.close()
+            if self.socket_id in self.main.sockets:
+                del self.main.sockets[self.socket_id]
+
+            for name in self.main.same_name_sockets:
+                if self.socket_id in self.main.same_name_sockets[name]:
+                    self.main.same_name_sockets[name].remove(self.socket_id)
+                    if len(self.main.same_name_sockets[name]) == 0:
+                        del self.main.same_name_sockets[name]
+
+
+
+            print("Socket closed", self.name)
+        except Exception as e:
+            print("Error closing socket:", e)
 
     def handle_message(self, message: dict):
         message_type = message["type"]
