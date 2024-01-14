@@ -3,9 +3,7 @@ from __future__ import annotations
 import socket
 from typing import TYPE_CHECKING, Callable
 
-from Man10SocketServer.data_class.Client import Client
 from Man10SocketServer.data_class.ConnectionFunction import ConnectionFunction
-from Man10SocketServer.data_class.SocketFunction import SocketFunction
 
 if TYPE_CHECKING:
     from Man10SocketServer.data_class.Connection import Connection

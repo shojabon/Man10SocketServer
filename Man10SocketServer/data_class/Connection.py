@@ -43,7 +43,7 @@ class Connection:
 
         self.message_queue = Queue()
 
-        self.functions: list[ConnectionFunction] = []
+        self.functions: dict[str, ConnectionFunction] = {}
         self.__register_socket_function(CommandFunction(self.main.main))
         self.__register_socket_function(SCommandFunction(self.main.main))
         self.__register_socket_function(SetNameFunction(self.main.main))
@@ -71,7 +71,7 @@ class Connection:
         thread.start()
 
     def __register_socket_function(self, socket_function: ConnectionFunction):
-        self.functions.append(socket_function)
+        self.functions[socket_function.function_type] = socket_function
 
     def __send_message_internal(self, message: dict):
         message_string = json.dumps(message, ensure_ascii=False) + "<E>"
@@ -81,7 +81,7 @@ class Connection:
                      reply_arguments: typing.Tuple = None) -> str | None:
         if reply or callback is not None:
             reply = True
-            reply_id = str(uuid.uuid4())
+            reply_id = str(uuid.uuid4())[:8]
 
             if reply_id:
                 message["replyId"] = reply_id
@@ -106,6 +106,12 @@ class Connection:
             self.clean_reply_data(reply_id)
             return reply
 
+    def clean_reply_data(self, reply_id: str):
+        if reply_id in self.reply_data: del self.reply_data[reply_id]
+        if reply_id in self.reply_lock: del self.reply_lock[reply_id]
+        if reply_id in self.reply_callback: del self.reply_callback[reply_id]
+        if reply_id in self.reply_arguments: del self.reply_arguments[reply_id]
+
     def send_reply_message(self, status: str, message, reply_id: str):
         self.send_message({"type": "reply", "replyId": reply_id, "message": message, "status": status})
 
@@ -120,7 +126,6 @@ class Connection:
                         message, buffer = buffer.split("<E>", 1)
                         try:
                             json_message = json.loads(message)
-                            print("Received message:", json_message)
                             self.handle_message(json_message)
                         except Exception as e:
                             print("Error parsing message:", e)
@@ -132,7 +137,10 @@ class Connection:
                 break
 
     def handle_message(self, message: dict):
-        for function in self.functions:
-            if function.function_type == message["type"] and (self.mode in function.mode or "*" in function.mode):
-                function.handle_message(self, message)
-                return
+        message_type = message["type"]
+        function = self.functions.get(message_type, None)
+        if function is None:
+            return
+        reply = function.handle_message(self, message)
+        if reply is not None and len(reply) == 2 and "replyId" in message:
+            self.send_reply_message(status=reply[0], message=reply[1], reply_id=message["replyId"])

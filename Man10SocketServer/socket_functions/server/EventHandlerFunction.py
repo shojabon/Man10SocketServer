@@ -4,7 +4,6 @@ import socket
 from typing import TYPE_CHECKING, Callable
 
 from Man10SocketServer.data_class.ConnectionFunction import ConnectionFunction
-from Man10SocketServer.data_class.ServerSocketFunction import ServerSocketFunction
 
 if TYPE_CHECKING:
     from Man10SocketServer.data_class.Connection import Connection

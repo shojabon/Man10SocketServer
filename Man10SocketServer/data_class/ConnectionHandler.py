@@ -69,10 +69,7 @@ class ConnectionHandler:
     def get_server_socket_round_robin(self, name: str):
         if name not in self.same_name_sockets:
             return None
-        if len(self.same_name_sockets[name]) == 0:
-            return None
-        if self.get_counter >= len(self.same_name_sockets[name]):
-            self.get_counter = 0
-        self.get_counter += 1
-        return self.sockets[self.same_name_sockets[name][self.get_counter % len(self.same_name_sockets[name])]]
+        import random
+        rand = random.randint(0, len(self.same_name_sockets[name]) - 1)
+        return self.sockets[self.same_name_sockets[name][rand]]
 
