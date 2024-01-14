@@ -4,6 +4,7 @@ import json
 import socket
 import threading
 import time
+import traceback
 import typing
 import uuid
 from queue import Queue
@@ -103,6 +104,7 @@ class Server:
                                 print("Received message:", json_message)
                         except Exception as e:
                             print("Error parsing message:", e)
+                            traceback.print_exc()
                 else:
                     break
             except Exception as e:
@@ -130,7 +132,7 @@ class Server:
     def send_message(self, message: dict, reply: bool = False, callback: Callable = None, reply_timeout: int = 1, reply_arguments: typing.Tuple = None) -> str | None:
         if reply or callback is not None:
             reply = True
-            reply_id = str(uuid.uuid4())
+            reply_id = str(uuid.uuid4())[:8]
 
             if reply_id:
                 message["replyId"] = reply_id
