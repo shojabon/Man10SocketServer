@@ -9,6 +9,7 @@ from Man10SocketServer.data_class.Connection import Connection
 from Man10SocketServer.data_class.ConnectionHandler import ConnectionHandler
 from Man10SocketServer.socket_functions.both.ReplyFunction import ReplyFunction
 from Man10SocketServer.socket_functions.client.CommandFunction import CommandFunction
+from Man10SocketServer.socket_functions.client.DefaultFunction import DefaultFunction
 from Man10SocketServer.socket_functions.client.SCommandFunction import SCommandFunction
 from Man10SocketServer.socket_functions.client.SetNameFunction import SetNameFunction
 from Man10SocketServer.socket_functions.client.SubscribeToEventHandlerFunction import SubscribeToEventHandlerFunction
@@ -22,16 +23,18 @@ class Man10SocketServer:
         self.config = open("config/config.json", "r")
         self.config = json.load(self.config)
 
+        self.default_function = DefaultFunction(self)
         def register_function(connection: Connection):
-            connection.register_socket_function(CommandFunction(self))
-            connection.register_socket_function(SCommandFunction(self))
+            # connection.register_socket_function(CommandFunction(self))
+            # connection.register_socket_function(SCommandFunction(self))
             connection.register_socket_function(SetNameFunction(self))
             connection.register_socket_function(SubscribeToEventHandlerFunction(self))
 
-            connection.register_socket_function(ReplyFunction(self))
+            # connection.register_socket_function(ReplyFunction(self))
+            connection.register_socket_function(self.default_function)
 
             connection.register_socket_function(EventHandlerFunction(self))
-            connection.register_socket_function(RequestFunction(self))
+            # connection.register_socket_function(RequestFunction(self))
 
         self.connection_handler: ConnectionHandler = ConnectionHandler()
         self.connection_handler.register_function_on_connect = register_function
@@ -65,7 +68,7 @@ class Man10SocketServer:
         # for x in tqdm(range(10000)):
         #     def callback(data):
         #         print(time.time() - start_time)
-        #     res = self.connection_handler.get_server_socket_round_robin("main").send_message({
+        #     res = self.connection_handler.get_socket("main").send_message({
         #         "type": "sCommand",
         #         "command": "mshop moneyGive ffa9b4cb-ada1-4597-ad24-10e318f994c8 1",
         #     }, reply=True)

@@ -52,6 +52,7 @@ class Connection:
                 try:
                     message = self.message_queue.get()
                     self.__send_message_internal(message)
+                    # print("Sent message", message)
                     self.message_queue.task_done()
                 except Exception as e:
                     print(e)
@@ -75,7 +76,7 @@ class Connection:
                      reply_arguments: typing.Tuple = None) -> str | None:
         if reply or callback is not None:
             reply = True
-            reply_id = str(uuid.uuid4())[:8]
+            reply_id = str(uuid.uuid4())
 
             if reply_id:
                 message["replyId"] = reply_id
@@ -107,22 +108,22 @@ class Connection:
         if reply_id in self.reply_arguments: del self.reply_arguments[reply_id]
 
     def send_reply_message(self, status: str, message, reply_id: str):
-        self.send_message({"type": "reply", "replyId": reply_id, "message": message, "status": status})
+        self.send_message({"type": "reply", "replyId": reply_id, "data": message, "status": status})
 
     def receive_messages(self):
         buffer = ""
         while True:
             try:
-                data = self.socket_object.recv(1024 * 10).decode('utf-8')
+                data = self.socket_object.recv(2 ** 15).decode('utf-8')
                 if data:
                     buffer += data
                     while "<E>" in buffer:
                         message, buffer = buffer.split("<E>", 1)
                         try:
                             json_message = json.loads(message)
-                            print("accepted message", json_message)
                             self.handle_message(json_message)
                         except Exception as e:
+                            print("error", message)
                             print("Error parsing message:", e)
                             traceback.print_exc()
                 else:
@@ -153,6 +154,8 @@ class Connection:
     def handle_message(self, message: dict):
         message_type = message["type"]
         function = self.functions.get(message_type, None)
+        if function is None:
+            function = self.functions.get("default", None)
         if function is None:
             return
         reply = function.handle_message(self, message)

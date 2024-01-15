@@ -19,20 +19,22 @@ class RequestFunction(ConnectionFunction):
 
     def handle_message(self, connection: Connection, json_message: dict):
         if "target" not in json_message:
-            return "invalid_args_target", None
+            return "error_invalid_args_target", None
         if "path" not in json_message:
-            return "invalid_args_path", None
+            return "error_invalid_args_path", None
         if "data" not in json_message:
-            return "invalid_args_data", None
+            return "error_invalid_args_data", None
         json_message["server"] = connection.name
 
         target_client = self.main.connection_handler.get_socket(json_message["target"])
         if target_client is None:
-            return "target_not_found", None
+            return "error_target_not_found", None
 
-        def reply_callback(data: dict):
-            target_client.send_reply_message("success", data, json_message["replyId"])
+        def reply_callback(data: dict, reply_id: str):
+            connection.send_reply_message("success", data["message"], reply_id)
 
-        print("sendinasdasda", json_message)
-
-        target_client.send_message(json_message, callback=reply_callback)
+        if "replyId" in json_message:
+            target_client.send_message(json_message, callback=reply_callback,
+                                       reply_arguments=(json_message["replyId"],))
+        else:
+            target_client.send_message(json_message)

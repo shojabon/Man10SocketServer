@@ -22,7 +22,7 @@ class ConnectionHandler:
         self.same_name_sockets: dict[str, list[str]] = {}
         self.get_counter = 0
 
-        def empty():
+        def empty(connection):
             pass
 
         self.register_function_on_connect: Callable[[Connection], None] = empty
