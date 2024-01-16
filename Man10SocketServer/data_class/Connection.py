@@ -6,6 +6,7 @@ import threading
 import traceback
 import typing
 import uuid
+from logging import getLogger
 from queue import Queue
 from threading import Thread
 from typing import TYPE_CHECKING, Callable
@@ -57,9 +58,9 @@ class Connection:
         self.send_message_thread.daemon = True
         self.send_message_thread.start()
 
-        thread = Thread(target=self.receive_messages)
-        thread.daemon = True
-        thread.start()
+        self.client_thread = threading.Thread(target=self.receive_messages)
+        self.client_thread.daemon = True
+        self.client_thread.start()
 
     def register_socket_function(self, socket_function: ConnectionFunction):
         self.functions[socket_function.function_type] = socket_function
@@ -106,41 +107,23 @@ class Connection:
     def send_reply_message(self, status: str, message, reply_id: str):
         self.send_message({"type": "reply", "replyId": reply_id, "data": message, "status": status})
 
-    # def receive_messages(self):
-    #     buffer = b""
-    #     while True:
-    #         try:
-    #             data = self.socket_object.recv(2 ** 3)
-    #             if data:
-    #                 buffer += data
-    #                 for x in range(buffer.count(b"<E>")):
-    #                     try:
-    #                         message, next_buffer = buffer.split(b"<E>", 1)
-    #                         json_message = json.loads(message.decode('utf-8'))
-    #                         buffer = next_buffer
-    #                         self.handle_message(json_message)
-    #                     except Exception as e:
-    #                         traceback.print_exc()
-    #         except Exception as e:
-    #             print("Error receiving data:", e)
-    #             break
-    #     self.socket_close()
-
     def receive_messages(self):
         buffer = ""
         while True:
             try:
-                data = self.socket_object.recv(2 ** 25).decode('utf-8')
+                data = self.socket_object.recv(2**25)
+                if not data:
+                    continue
                 if data:
-                    buffer += data
+                    buffer += data.decode('utf-8')
                     while "<E>" in buffer:
                         message, buffer = buffer.split("<E>", 1)
                         try:
                             json_message = json.loads(message)
+                            print(json_message)
                             self.handle_message(json_message)
                         except Exception as e:
-                            print("error", message)
-                            print("Error parsing message:", e)
+                            print(message)
                             traceback.print_exc()
                 else:
                     break

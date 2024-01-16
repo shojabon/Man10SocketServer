@@ -56,8 +56,6 @@ class ConnectionHandler:
                     client_socket, addr = server_socket.accept()
                     socket_id = str(uuid.uuid4())
                     self.sockets[socket_id] = Connection(self, client_socket, socket_id, "client")
-                    client_thread = threading.Thread(target=self.sockets[socket_id].receive_messages)
-                    client_thread.start()
             finally:
                 server_socket.close()
 
@@ -71,7 +69,5 @@ class ConnectionHandler:
     def get_socket(self, name: str) -> Connection | None:
         if name not in self.same_name_sockets:
             return None
-        import random
-        rand = random.randint(0, len(self.same_name_sockets[name]) - 1)
-        return self.sockets[self.same_name_sockets[name][rand]]
+        return self.sockets[self.same_name_sockets[name][0]]
 
