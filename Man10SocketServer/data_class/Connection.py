@@ -110,7 +110,7 @@ class Connection:
         buffer = ""
         while True:
             try:
-                data = self.socket_object.recv(2 ** 15).decode('utf-8')
+                data = self.socket_object.recv(2 ** 20).decode('utf-8')
                 if data:
                     buffer += data
                     while "<E>" in buffer:
