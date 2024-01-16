@@ -28,10 +28,18 @@ class DefaultFunction(ConnectionFunction):
         message_type = json_message.get("type")
         target = json_message.get("target")
         reply_id = json_message.get("replyId")
+
+        # target to player server
+        if target is not None and target in self.main.minecraft_server_manager.players:
+            target = self.main.minecraft_server_manager.get_player(target).get_server()
+
         if reply_id is None:
             if target is None:
                 return
-            self.main.connection_handler.get_socket(target).send_message(json_message)
+            target_socket = self.main.connection_handler.get_socket(target)
+            if target_socket is None:
+                return
+            target_socket.send_message(json_message)
             return
         # delete target tag
         if target is not None:
@@ -49,7 +57,18 @@ class DefaultFunction(ConnectionFunction):
         if message_type == "reply":
             reply_target = self.reply_target.get(reply_id)
             if reply_target is not None:
-                self.main.connection_handler.get_socket(reply_target).send_message(json_message)
+                target_socket = self.main.connection_handler.get_socket(reply_target)
+                if target_socket is None:
+                    return
+                target_socket.send_message(json_message)
                 del self.reply_target[reply_id]
                 return
+
+            if reply_id in connection.reply_callback:
+                connection.reply_callback.get(reply_id)(json_message, *connection.reply_arguments.get(reply_id))
+                # Store the response
+            if reply_id in connection.reply_lock:
+                connection.reply_data[reply_id] = json_message
+                # Trigger the event to unblock the waiting thread
+                connection.reply_lock[reply_id].set()
 

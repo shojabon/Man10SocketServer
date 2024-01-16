@@ -5,16 +5,13 @@ from typing import Callable
 
 from tqdm import tqdm
 
+from Man10SocketServer.MinecraftServerManager import MinecraftServerManager
 from Man10SocketServer.data_class.Connection import Connection
 from Man10SocketServer.data_class.ConnectionHandler import ConnectionHandler
-from Man10SocketServer.socket_functions.both.ReplyFunction import ReplyFunction
-from Man10SocketServer.socket_functions.client.CommandFunction import CommandFunction
 from Man10SocketServer.socket_functions.client.DefaultFunction import DefaultFunction
-from Man10SocketServer.socket_functions.client.SCommandFunction import SCommandFunction
 from Man10SocketServer.socket_functions.client.SetNameFunction import SetNameFunction
 from Man10SocketServer.socket_functions.client.SubscribeToEventHandlerFunction import SubscribeToEventHandlerFunction
 from Man10SocketServer.socket_functions.server.EventHandlerFunction import EventHandlerFunction
-from Man10SocketServer.socket_functions.server.RequestFunction import RequestFunction
 
 
 class Man10SocketServer:
@@ -24,20 +21,18 @@ class Man10SocketServer:
         self.config = json.load(self.config)
 
         self.default_function = DefaultFunction(self)
+        self.event_handler = EventHandlerFunction(self)
+
         def register_function(connection: Connection):
-            # connection.register_socket_function(CommandFunction(self))
-            # connection.register_socket_function(SCommandFunction(self))
             connection.register_socket_function(SetNameFunction(self))
             connection.register_socket_function(SubscribeToEventHandlerFunction(self))
 
-            # connection.register_socket_function(ReplyFunction(self))
             connection.register_socket_function(self.default_function)
-
-            connection.register_socket_function(EventHandlerFunction(self))
-            # connection.register_socket_function(RequestFunction(self))
+            connection.register_socket_function(self.event_handler)
 
         self.connection_handler: ConnectionHandler = ConnectionHandler()
         self.connection_handler.register_function_on_connect = register_function
+
         self.connection_handler.open_socket_client("0.0.0.0", 5000)
 
         def check_open_socket_count_thread():
@@ -57,6 +52,9 @@ class Man10SocketServer:
         self.check_open_socket_count_thread = Thread(target=check_open_socket_count_thread)
         self.check_open_socket_count_thread.daemon = True
         self.check_open_socket_count_thread.start()
+        time.sleep(1)
+
+        self.minecraft_server_manager = MinecraftServerManager(self)
 
         # self.servers: dict[str, Server] = {}
         # for server in self.config["servers"]:
@@ -79,4 +77,5 @@ class Man10SocketServer:
 
         time.sleep(100000)
 
-
+    def list_target_servers(self) -> list[str]:
+        return [x["name"] for x in self.config["servers"]]

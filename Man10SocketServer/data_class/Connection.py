@@ -13,13 +13,9 @@ from typing import TYPE_CHECKING, Callable
 from expiring_dict import ExpiringDict
 
 from Man10SocketServer.data_class.ConnectionFunction import ConnectionFunction
-from Man10SocketServer.socket_functions.both.ReplyFunction import ReplyFunction
-from Man10SocketServer.socket_functions.client.CommandFunction import CommandFunction
-from Man10SocketServer.socket_functions.client.SCommandFunction import SCommandFunction
 from Man10SocketServer.socket_functions.client.SetNameFunction import SetNameFunction
 from Man10SocketServer.socket_functions.client.SubscribeToEventHandlerFunction import SubscribeToEventHandlerFunction
 from Man10SocketServer.socket_functions.server.EventHandlerFunction import EventHandlerFunction
-from Man10SocketServer.socket_functions.server.RequestFunction import RequestFunction
 
 if TYPE_CHECKING:
     from Man10SocketServer.data_class.ConnectionHandler import ConnectionHandler
