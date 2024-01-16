@@ -33,9 +33,9 @@ class Man10SocketServer:
         self.connection_handler: ConnectionHandler = ConnectionHandler()
         self.connection_handler.register_function_on_connect = register_function
 
-        @self.event_handler.listener("player_command_send")
-        def on_player_command_send(connection: Connection, data: dict):
-            print(data)
+        # @self.event_handler.listener("player_command_send")
+        # def on_player_command_send(connection: Connection, data: dict):
+        #     print(data)
 
         self.connection_handler.open_socket_client("0.0.0.0", 5000)
 

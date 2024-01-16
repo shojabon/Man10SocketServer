@@ -106,11 +106,31 @@ class Connection:
     def send_reply_message(self, status: str, message, reply_id: str):
         self.send_message({"type": "reply", "replyId": reply_id, "data": message, "status": status})
 
+    # def receive_messages(self):
+    #     buffer = b""
+    #     while True:
+    #         try:
+    #             data = self.socket_object.recv(2 ** 3)
+    #             if data:
+    #                 buffer += data
+    #                 for x in range(buffer.count(b"<E>")):
+    #                     try:
+    #                         message, next_buffer = buffer.split(b"<E>", 1)
+    #                         json_message = json.loads(message.decode('utf-8'))
+    #                         buffer = next_buffer
+    #                         self.handle_message(json_message)
+    #                     except Exception as e:
+    #                         traceback.print_exc()
+    #         except Exception as e:
+    #             print("Error receiving data:", e)
+    #             break
+    #     self.socket_close()
+
     def receive_messages(self):
         buffer = ""
         while True:
             try:
-                data = self.socket_object.recv(2 ** 20).decode('utf-8')
+                data = self.socket_object.recv(2 ** 25).decode('utf-8')
                 if data:
                     buffer += data
                     while "<E>" in buffer:
