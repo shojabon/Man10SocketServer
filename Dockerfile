@@ -1,6 +1,6 @@
 FROM python:3.9-slim-buster
 
-WORKDIR /man10shopv3
+WORKDIR /Man10SocketServer
 
 COPY . .
 RUN pip3 install -r requirements.txt
