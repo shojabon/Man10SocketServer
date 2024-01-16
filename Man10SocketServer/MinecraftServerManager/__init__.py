@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import json
 import time
+import typing
 from threading import Thread
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 from Man10SocketServer.MinecraftServerManager.data_class.Player import Player
 
@@ -65,3 +66,27 @@ class MinecraftServerManager:
                 "type": "sCommand",
                 "command": "man10socket playersInfo"
             }, callback=callback_task, reply_arguments=(target,))
+
+    def execute_command(self, target: str, command: str, reply: bool = False, callback: Callable = None, reply_timeout: int = 1, reply_arguments: typing.Tuple = None):
+        if target in self.players:
+            target = self.get_player(target).get_server()
+
+        target_socket = self.main.connection_handler.get_socket(target)
+        if target_socket is None:
+            raise Exception("target server not found")
+        return target_socket.send_message({
+            "type": "command",
+            "command": command
+        }, reply=reply, callback=callback, reply_timeout=reply_timeout, reply_arguments=reply_arguments)
+
+    def execute_sCommand(self, target: str, command: str, reply: bool = False, callback: Callable = None, reply_timeout: int = 1, reply_arguments: typing.Tuple = None):
+        if target in self.players:
+            target = self.get_player(target).get_server()
+
+        target_socket = self.main.connection_handler.get_socket(target)
+        if target_socket is None:
+            raise Exception("target server not found")
+        return target_socket.send_message({
+            "type": "sCommand",
+            "command": command
+        }, reply=reply, callback=callback, reply_timeout=reply_timeout, reply_arguments=reply_arguments)
