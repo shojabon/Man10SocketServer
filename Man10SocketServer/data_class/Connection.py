@@ -120,7 +120,7 @@ class Connection:
                         message, buffer = buffer.split("<E>", 1)
                         try:
                             json_message = json.loads(message)
-                            print(json_message)
+                            # print(json_message)
                             self.handle_message(json_message)
                         except Exception as e:
                             print(message)
