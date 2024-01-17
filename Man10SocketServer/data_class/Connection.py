@@ -41,7 +41,7 @@ class Connection:
         self.reply_callback = ExpiringDict(5)
         self.reply_arguments = ExpiringDict(5)
 
-        self.executor = ThreadPoolExecutor(max_workers=20)
+        self.executor: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=20)
 
         self.message_queue = Queue()
 
@@ -112,24 +112,24 @@ class Connection:
         self.send_message({"type": "reply", "replyId": reply_id, "data": message, "status": status})
 
     def receive_messages(self):
-        buffer = ""
+        buffer = b""
         while True:
             try:
                 data = self.socket_object.recv(2**10)
                 if not data:
                     continue
                 if data:
-                    buffer += data.decode('utf-8')
-                    while "<E>" in buffer:
-                        message, buffer = buffer.split("<E>", 1)
+                    buffer += data
+                    while b"<E>" in buffer:
+                        message, buffer = buffer.split(b"<E>", 1)
                         try:
-                            json_message = json.loads(message)
 
                             # print(json_message)
-                            def task():
+                            def task(message_object):
+                                json_message = json.loads(message_object.decode('utf-8'))
                                 self.handle_message(json_message)
 
-                            self.executor.submit(task)
+                            self.executor.submit(task, message)
 
                             # self.handle_message(json_message)
 
