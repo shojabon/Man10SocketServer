@@ -21,7 +21,7 @@ class EventHandlerFunction(ConnectionFunction):
 
     def handle_message(self, connection: Connection, json_message: dict):
         event_type = json_message.get("event")
-        json_message["server"] = connection.name
+        # json_message["server"] = connection.name
         if event_type in self.listeners:
             for listener in self.listeners[event_type]:
                 try:
