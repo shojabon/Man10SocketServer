@@ -56,7 +56,9 @@ class Connection:
                     # print("Sent message", message)
                     self.message_queue.task_done()
                 except Exception as e:
+                    self.socket_close()
                     print(e)
+                    break
 
         self.send_message_thread = Thread(target=send_message_thread)
         self.send_message_thread.daemon = True
@@ -134,7 +136,7 @@ class Connection:
                             # self.handle_message(json_message)
 
                         except Exception as e:
-                            print(message)
+                            print("x", message)
                             traceback.print_exc()
                 else:
                     break
