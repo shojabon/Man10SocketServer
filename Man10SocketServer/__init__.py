@@ -79,7 +79,8 @@ class Man10SocketServer:
         #
         # print("done" + str(time.time() - start_time))
 
-        time.sleep(100000)
+        while True:
+            time.sleep(1)
 
     def list_target_servers(self) -> list[str]:
         return [x["name"] for x in self.config["servers"]]
