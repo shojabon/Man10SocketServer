@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import random
 import socket
 import threading
 import traceback
@@ -20,7 +21,6 @@ class ConnectionHandler:
 
         self.sockets: dict[str, Connection] = {}
         self.same_name_sockets: dict[str, list[str]] = {}
-        self.get_counter = 0
 
         def empty(connection):
             pass
@@ -69,5 +69,8 @@ class ConnectionHandler:
     def get_socket(self, name: str) -> Connection | None:
         if name not in self.same_name_sockets:
             return None
-        return self.sockets[self.same_name_sockets[name][0]]
+        options = self.same_name_sockets[name]
+        # select random
+        random_choice = options[random.randint(0, len(options) - 1)]
+        return self.sockets[random_choice]
 

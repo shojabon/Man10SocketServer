@@ -3,6 +3,7 @@ import time
 from threading import Thread
 from typing import Callable
 
+from pymongo import MongoClient
 from tqdm import tqdm
 
 from Man10SocketServer.MinecraftServerManager import MinecraftServerManager
@@ -19,6 +20,8 @@ class Man10SocketServer:
     def __init__(self):
         self.config = open("config/config.json", "r")
         self.config = json.load(self.config)
+
+        # self.mongo: MongoClient = MongoClient(self.config["mongodbConnectionString"])
 
         self.default_function = DefaultFunction(self)
         self.event_handler = EventHandlerFunction(self)

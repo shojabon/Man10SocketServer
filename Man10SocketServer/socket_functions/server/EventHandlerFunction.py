@@ -22,6 +22,14 @@ class EventHandlerFunction(ConnectionFunction):
     def handle_message(self, connection: Connection, json_message: dict):
         event_type = json_message.get("event")
         json_message["server"] = connection.name
+
+        data = json_message.get("data", {})
+        if "player" in data:
+            if data["player"] not in self.main.minecraft_server_manager.players:
+                return
+            if isinstance(data["player"], str):
+                data["player"] = self.main.minecraft_server_manager.get_player(data["player"]).get_player_json()
+
         if event_type in self.listeners:
             for listener in self.listeners[event_type]:
                 try:
@@ -32,7 +40,7 @@ class EventHandlerFunction(ConnectionFunction):
         for client in self.main.connection_handler.sockets.values():
             if "*" in client.listening_event_types or event_type in client.listening_event_types:
                 client.send_message(json_message)
-                print("send event to", client.name, json_message)
+                # print("send event to", client.name, json_message)
 
     def listener(self, event_type: str):
         def decorator(func: Callable[[Connection, dict], None]):

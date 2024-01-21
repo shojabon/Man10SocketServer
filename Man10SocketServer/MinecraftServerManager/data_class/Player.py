@@ -37,3 +37,6 @@ class Player:
 
     def is_online(self):
         return self.get_server() is not None
+
+    def get_player_json(self):
+        return self.__player_data

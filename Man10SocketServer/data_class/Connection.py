@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import socket
 import threading
@@ -117,7 +118,7 @@ class Connection:
         buffer = b""
         while True:
             try:
-                data = self.socket_object.recv(2**10)
+                data = self.socket_object.recv(2 ** 10)
                 if not data:
                     continue
                 if data:
@@ -151,8 +152,10 @@ class Connection:
             if self.socket_id in self.main.sockets:
                 del self.main.sockets[self.socket_id]
 
-            for name in self.main.same_name_sockets:
-                if self.socket_id in self.main.same_name_sockets[name]:
+            same_name_sockets = self.main.same_name_sockets.copy()
+
+            for name in same_name_sockets:
+                if self.socket_id in same_name_sockets[name]:
                     self.main.same_name_sockets[name].remove(self.socket_id)
                     if len(self.main.same_name_sockets[name]) == 0:
                         del self.main.same_name_sockets[name]
@@ -160,6 +163,8 @@ class Connection:
             print("Socket closed", self.name)
         except Exception as e:
             print("Error closing socket:", e)
+            traceback.print_exc()
+
 
     def handle_message(self, message: dict):
         message_type = message["type"]
@@ -171,3 +176,5 @@ class Connection:
         reply = function.handle_message(self, message)
         if reply is not None and len(reply) == 2 and "replyId" in message:
             self.send_reply_message(status=reply[0], message=reply[1], reply_id=message["replyId"])
+        if reply is not None and type(reply) == dict and "replyId" in message:
+            self.send_reply_message(status=reply.get("status", None), message=reply.get("data", None), reply_id=message["replyId"])
